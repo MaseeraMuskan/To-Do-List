@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro To-Do App</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    position:relative;
+    background-size:cover;
+    background-position:center;
+    transition:background-image 1.5s ease-in-out;
+}
+
+/* Dark Overlay */
+body::before{
+    content:"";
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:linear-gradient(45deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4));
+    z-index:-1;
+}
+
+/* Floating Particles */
+.particle{
+    position:absolute;
+    width:10px;
+    height:10px;
+    background:white;
+    border-radius:50%;
+    opacity:0.5;
+    animation:float 6s infinite alternate ease-in-out;
+}
+
+@keyframes float{
+    from{transform:translateY(0);}
+    to{transform:translateY(-40px);}
+}
+
+/* Mouse Glow */
+.mouse-light{
+    position:absolute;
+    width:200px;
+    height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,0.5) 0%, transparent 70%);
+    pointer-events:none;
+    transform:translate(-50%,-50%);
+    mix-blend-mode:overlay;
+}
+
+/* Glass Container */
+.container{
+    width:600px;
+    backdrop-filter:blur(15px);
+    background:rgba(255,255,255,0.1);
+    padding:25px;
+    border-radius:25px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.5);
+    color:white;
+    animation:fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(30px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+h2{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+/* Navigation */
+nav{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+}
+
+nav button{
+    padding:8px 12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:rgba(255,255,255,0.2);
+    color:white;
+    transition:0.3s;
+}
+
+nav button:hover{
+    background:white;
+    color:black;
+    transform:scale(1.05);
+}
+
+/* Inputs */
+input,button.add-btn{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    border-radius:10px;
+    border:none;
+    outline:none;
+}
+
+button.add-btn{
+    background:white;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button.add-btn:hover{
+    background:#ff6a88;
+    color:white;
+}
+
+/* Task List */
+ul{
+    list-style:none;
+    max-height:250px;
+    overflow-y:auto;
+}
+
+li{
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.2);
+    position:relative;
+    transition:0.3s;
+    animation:slideIn 0.4s ease;
+}
+
+@keyframes slideIn{
+    from{opacity:0; transform:translateX(-20px);}
+    to{opacity:1; transform:translateX(0);}
+}
+
+li:hover{
+    transform:scale(1.03);
+    box-shadow:0 0 15px rgba(255,255,255,0.6);
+}
+
+.completed{
+    background:rgba(0,255,150,0.3);
+}
+
+.missed{
+    background:rgba(255,0,0,0.4);
+    animation:shake 0.4s;
+}
+
+@keyframes shake{
+    0%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    50%{transform:translateX(6px);}
+    75%{transform:translateX(-6px);}
+    100%{transform:translateX(0);}
+}
+
+.delete-btn,.edit-btn{
+    position:absolute;
+    top:10px;
+    cursor:pointer;
+}
+
+.delete-btn{ right:10px; }
+.edit-btn{ right:35px; }
+
+/* Progress */
+.progress-container{
+    height:8px;
+    background:rgba(255,255,255,0.3);
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.progress-bar{
+    height:8px;
+    background:#00ffcc;
+    width:0%;
+    border-radius:10px;
+    transition:0.6s;
+}
+
+/* Popup */
+.popup{
+    position:fixed;
+    bottom:-100px;
+    right:20px;
+    background:#ff4d4d;
+    color:white;
+    padding:15px 25px;
+    border-radius:15px;
+    transition:0.5s;
+}
+
+.popup.show{
+    bottom:20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Floating Particles -->
+<div class="particle" style="top:20%; left:15%; animation-delay:1s;"></div>
+<div class="particle" style="top:60%; left:80%; animation-delay:2s;"></div>
+<div class="particle" style="top:40%; left:40%; animation-delay:3s;"></div>
+
+<div class="mouse-light" id="mouseLight"></div>
+
+<div class="container">
+<h2>🚀 Pro To-Do List</h2>
+
+<nav>
+<button onclick="showPage('pending')">Enter Task</button>
+<button onclick="showPage('completed')">Completed Task</button>
+<button onclick="showPage('missed')">Missed Task</button>
+</nav>
+
+<div class="progress-container">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div id="pendingPage">
+<input type="text" id="taskInput" placeholder="Enter task">
+<input type="datetime-local" id="dueTime">
+<button class="add-btn" onclick="addTask()">Add Task</button>
+<ul id="pendingList"></ul>
+</div>
+
+<div id="completedPage" style="display:none;">
+<ul id="completedList"></ul>
+</div>
+
+<div id="missedPage" style="display:none;">
+<ul id="missedList"></ul>
+</div>
+
+</div>
+
+<div id="popup" class="popup"></div>
+
+<script>
+
+/* ========== BACKGROUND SLIDESHOW ========== */
+const images=[
+"https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+"https://images.unsplash.com/photo-1493244040629-496f6d136cc3",
+"https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+"https://images.unsplash.com/photo-1470770841072-f978cf4d019e"
+];
+
+let index=0;
+function changeBackground(){
+document.body.style.backgroundImage=`url(${images[index]})`;
+index=(index+1)%images.length;
+}
+setInterval(changeBackground,8000);
+changeBackground();
+
+/* Mouse Glow */
+const light=document.getElementById("mouseLight");
+document.addEventListener("mousemove",e=>{
+light.style.left=e.pageX+"px";
+light.style.top=e.pageY+"px";
+});
+
+/* Notifications */
+if("Notification" in window){
+Notification.requestPermission();
+}
+
+function showPopup(msg){
+const popup=document.getElementById("popup");
+popup.innerText=msg;
+popup.classList.add("show");
+setTimeout(()=>popup.classList.remove("show"),3000);
+}
+
+function showPage(page){
+document.getElementById("pendingPage").style.display="none";
+document.getElementById("completedPage").style.display="none";
+document.getElementById("missedPage").style.display="none";
+document.getElementById(page+"Page").style.display="block";
+}
+
+function updateProgress(){
+const total=document.querySelectorAll("li").length;
+const completed=document.querySelectorAll(".completed").length;
+const percent= total===0 ? 0 : (completed/total)*100;
+document.getElementById("progressBar").style.width=percent+"%";
+}
+
+function addTask(){
+const text=document.getElementById("taskInput").value;
+const due=document.getElementById("dueTime").value;
+if(!text||!due)return;
+
+const li=document.createElement("li");
+li.innerHTML=`${text}
+<span class="edit-btn">✏️</span>
+<span class="delete-btn">❌</span>`;
+
+li.dataset.duetime=due;
+
+li.querySelector(".delete-btn").onclick=()=>{
+li.remove();
+updateProgress();
+};
+
+li.onclick=()=>completeTask(li,text);
+
+document.getElementById("pendingList").appendChild(li);
+scheduleMiss(li,text);
+updateProgress();
+
+document.getElementById("taskInput").value="";
+document.getElementById("dueTime").value="";
+}
+
+function completeTask(li,text){
+if(li.parentElement.id!=="pendingList")return;
+
+const now=new Date().getTime();
+const due=new Date(li.dataset.duetime).getTime();
+
+if(now<=due){
+li.className="completed";
+document.getElementById("completedList").appendChild(li);
+showPopup("🎉 Completed On Time!");
+}else{
+li.className="missed";
+document.getElementById("missedList").appendChild(li);
+showPopup("⏰ Completed Late!");
+}
+updateProgress();
+}
+
+function scheduleMiss(li,text){
+const delay=new Date(li.dataset.duetime)-new Date();
+if(delay>0){
+setTimeout(()=>{
+if(li.parentElement.id==="pendingList"){
+li.className="missed";
+document.getElementById("missedList").appendChild(li);
+if(Notification.permission==="granted"){
+new Notification("Task Missed",{body:text});
+}
+showPopup("❌ Task Missed!");
+updateProgress();
+}
+},delay);
+}
+}
+</script>
+
+</body>
+</html>
